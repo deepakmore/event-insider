@@ -1,0 +1,17 @@
+logging:
+  level:
+    org.hibernate.SQL: WARN
+    org.hibernate.orm.jdbc.bind: WARN
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/event_insider
+    username: deepakmadanmore
+    password: ""
+    driver-class-name: org.postgresql.Driver
+
+springdoc:
+  api-docs:
+    enabled: false
+  swagger-ui:
+    enabled: false

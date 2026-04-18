@@ -1,0 +1,66 @@
+app:
+  jwt:
+    secret: ${APP_JWT_SECRET:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef}
+    expiration-seconds: 3600
+  security:
+    require-sso-token: ${APP_REQUIRE_SSO_TOKEN:false}
+  booking:
+    hold-duration: PT15M
+    stale-hold-scan-interval-ms: 60000
+  payment:
+    webhook-secret: ${APP_PAYMENT_WEBHOOK_SECRET:dev-webhook-secret}
+  kafka:
+    topics:
+      booking: ${APP_KAFKA_TOPIC_BOOKING:booking.events}
+
+spring:
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+  application:
+    name: event-insider
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+  jpa:
+    hibernate:
+      ddl-auto: none
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: true
+
+logging:
+  level:
+    org.hibernate.SQL: DEBUG
+    org.hibernate.orm.jdbc.bind: TRACE
+
+management:
+  endpoints:
+    web:
+      base-path: /actuator
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
+    metrics:
+      enabled: true
+    info:
+      enabled: true
+  health:
+    livenessstate:
+      enabled: true
+    readinessstate:
+      enabled: true
+  metrics:
+    tags:
+      application: ${spring.application.name}
+
+info:
+  application:
+    name: ${spring.application.name}

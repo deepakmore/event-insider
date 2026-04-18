@@ -1,0 +1,12 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/event_insider
+    username: admin
+    password: admin
+    driver-class-name: org.postgresql.Driver
+
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    enabled: true
