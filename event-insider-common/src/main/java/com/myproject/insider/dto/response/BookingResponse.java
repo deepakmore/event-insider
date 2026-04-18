@@ -27,4 +27,7 @@ public class BookingResponse {
     private Instant holdExpiresAt;
     private BigDecimal totalAmount;
     private List<BookingLineResponse> lines;
+    private Instant cancelledAt;
+    private String cancelReason;
+    private Long cancelledByUserId;
 }

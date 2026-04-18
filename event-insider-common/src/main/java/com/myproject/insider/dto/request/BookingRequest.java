@@ -5,6 +5,7 @@ import java.util.List;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -16,7 +17,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class CreateBookingRequest {
+public class BookingRequest {
 
     @NotNull
     @Positive
@@ -32,4 +33,8 @@ public class CreateBookingRequest {
 
     @NotEmpty
     private List<@NotNull @Positive Long> seatInventoryIds;
+
+    @Size(max = 100)
+    private String cancelReason;
+
 }

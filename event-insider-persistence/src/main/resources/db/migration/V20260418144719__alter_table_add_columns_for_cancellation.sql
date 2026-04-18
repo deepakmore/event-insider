@@ -1,0 +1,4 @@
+ALTER TABLE booking
+    ADD COLUMN IF NOT EXISTS cancelled_at TIMESTAMP,
+    ADD COLUMN IF NOT EXISTS cancel_reason VARCHAR(500),
+    ADD COLUMN IF NOT EXISTS cancelled_by_user_id BIGINT REFERENCES users (id);

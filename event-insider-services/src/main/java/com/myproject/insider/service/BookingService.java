@@ -11,7 +11,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.myproject.insider.dto.request.CreateBookingRequest;
+import com.myproject.insider.dto.request.BookingRequest;
 import com.myproject.insider.dto.response.BookingLineResponse;
 import com.myproject.insider.dto.response.BookingResponse;
 import com.myproject.insider.entity.Booking;
@@ -54,7 +54,7 @@ public class BookingService {
     private String bookingHoldDurationIso;
 
     @Transactional
-    public BookingResponse create(CreateBookingRequest request) {
+    public BookingResponse create(BookingRequest request) {
         List<Long> distinctSeatInventoryIds = request.getSeatInventoryIds().stream().distinct().sorted().toList();
         if (distinctSeatInventoryIds.isEmpty()) {
             throw new ApiBadRequestException("seatInventoryIds must not be empty");
@@ -126,10 +126,22 @@ public class BookingService {
     }
 
     @Transactional
-    public void cancelByUser(Long bookingId, Long userId) {
+    public void cancelByUser(Long bookingId, Long userId, BookingRequest request) {
         Booking booking = bookingRepository.findByIdAndUser_Id(bookingId, userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking", bookingId));
-        cancelInProgress(booking);
+        booking.setCancelReason(resolveUserCancelReason(request));
+        cancelInProgress(booking, request.getCancelReason(), request.getUserId());
+    }
+
+    private String resolveUserCancelReason(BookingRequest request) {
+        if (request == null || request.getCancelReason() == null || request.getCancelReason().isBlank()) {
+            return "User cancelled";
+        }
+        String reason = request.getCancelReason().strip();
+        if (reason.length() > 100) {
+            throw new ApiBadRequestException("cancelReason must be at most 100 characters");
+        }
+        return reason;
     }
 
     @Transactional
@@ -141,11 +153,11 @@ public class BookingService {
             if (booking.getHoldExpiresAt() == null || !booking.getHoldExpiresAt().isBefore(Instant.now())) {
                 return;
             }
-            cancelInProgress(booking);
+            cancelInProgress(booking, "Hold expired", null);
         });
     }
 
-    private void cancelInProgress(Booking booking) {
+    private void cancelInProgress(Booking booking, String cancelReason, Long cancelledByUserId) {
         if (booking.getStatus() != BookingStatus.IN_PROGRESS) {
             throw new ApiBadRequestException("Only in-progress bookings can be cancelled");
         }
@@ -153,6 +165,9 @@ public class BookingService {
         seatInventoryRepository.releaseHeldSeats(booking.getId(), SeatInventoryStatus.HELD, SeatInventoryStatus.AVAILABLE,
                 now);
         booking.setStatus(BookingStatus.CANCELLED);
+        booking.setCancelledAt(now);
+        booking.setCancelReason(cancelReason);
+        booking.setCancelledByUserId(cancelledByUserId);
         bookingRepository.save(booking);
     }
 
@@ -217,6 +232,9 @@ public class BookingService {
                 .status(booking.getStatus())
                 .createdAt(booking.getCreatedAt())
                 .holdExpiresAt(booking.getHoldExpiresAt())
+                .cancelledAt(booking.getCancelledAt())
+                .cancelReason(booking.getCancelReason())
+                .cancelledByUserId(booking.getCancelledByUserId())
                 .totalAmount(total)
                 .lines(lineResponses)
                 .build();

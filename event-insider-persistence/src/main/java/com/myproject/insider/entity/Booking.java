@@ -55,6 +55,15 @@ public class Booking {
     @Column(name = "hold_expires_at")
     private Instant holdExpiresAt;
 
+    @Column(name = "cancelled_at")
+    private Instant cancelledAt;
+
+    @Column(name = "cancel_reason")
+    private String cancelReason;
+
+    @Column(name = "cancelled_by_user_id")
+    private Long cancelledByUserId;
+
     @OneToMany(mappedBy = "booking")
     @Builder.Default
     private List<BookingSeat> bookingSeats = new ArrayList<>();
