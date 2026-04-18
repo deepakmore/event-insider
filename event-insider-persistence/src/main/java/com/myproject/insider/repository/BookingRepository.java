@@ -4,6 +4,8 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
@@ -22,7 +24,7 @@ public interface BookingRepository extends JpaRepository<Booking, Long> {
 
     Optional<Booking> findByIdAndUser_Id(Long id, Long userId);
 
-    List<Booking> findByStatusAndHoldExpiresAtBefore(BookingStatus status, Instant before);
+    Page<Booking> findByStatusAndHoldExpiresAtBefore(BookingStatus status, Instant before, Pageable pageable);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select b from Booking b where b.id = :id")

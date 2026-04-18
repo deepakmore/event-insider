@@ -1,0 +1,28 @@
+spring:
+  autoconfigure:
+    exclude: org.springframework.boot.autoconfigure.kafka.KafkaAutoConfiguration
+  task:
+    scheduling:
+      enabled: false
+  datasource:
+    url: jdbc:postgresql://${EVENT_INSIDER_TEST_DB_HOST:localhost}:${EVENT_INSIDER_TEST_DB_PORT:5432}/event_insider_test
+    username: admin
+    password: admin
+  jpa:
+    hibernate:
+      ddl-auto: none
+    open-in-view: false
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+logging:
+  level:
+    org.hibernate.SQL: WARN
+    org.hibernate.orm.jdbc.bind: WARN
+
+app:
+  payment:
+    webhook-secret: test-webhook-secret
+  booking:
+    stale-hold-scan-interval-ms: 999999999
