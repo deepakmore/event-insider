@@ -20,11 +20,14 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
 import com.jayway.jsonpath.JsonPath;
+import com.myproject.insider.enums.SeatInventoryStatus;
+import com.myproject.insider.repository.SeatInventoryRepository;
 
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -36,11 +39,15 @@ class BassiMumbaiConcurrentBookingIntegrationTest {
 
     private static final long BASSI_MUMBAI_SHOW_ID = 3L;
     private static final long BASSI_BRONZE_CATEGORY_ID = 7L;
-    /** First seat_inventory row for Mumbai show (nine consecutive ids 19–27). */
-    private static final long MUMBAI_FIRST_SEAT_INVENTORY_ID = 19L;
 
     @Autowired
     MockMvc mockMvc;
+
+    @Autowired
+    SeatInventoryRepository seatInventoryRepository;
+
+    @Autowired
+    JdbcTemplate jdbcTemplate;
 
     @Test
     void tenUsersRaceForNineSeats_onBassiMumbaiShow_nineBookingsOneConflict() throws Exception {
@@ -60,6 +67,19 @@ class BassiMumbaiConcurrentBookingIntegrationTest {
 
         CopyOnWriteArrayList<UserBooking> heldBookings = new CopyOnWriteArrayList<>();
         try {
+            jdbcTemplate.update(
+                    "update seat_inventory set status = 'AVAILABLE', booking_id = null where show_id = ?",
+                    BASSI_MUMBAI_SHOW_ID);
+
+            List<Long> availableSeatIds = seatInventoryRepository
+                    .findByShowAndStatusWithSeat(BASSI_MUMBAI_SHOW_ID, SeatInventoryStatus.AVAILABLE)
+                    .stream()
+                    .map(si -> si.getId())
+                    .sorted()
+                    .limit(9)
+                    .toList();
+            assertEquals(9, availableSeatIds.size(), "test requires nine available seats in Mumbai bronze inventory");
+
             CountDownLatch allArmed = new CountDownLatch(10);
             CountDownLatch fire = new CountDownLatch(1);
             AtomicInteger created = new AtomicInteger();
@@ -71,7 +91,7 @@ class BassiMumbaiConcurrentBookingIntegrationTest {
                 for (int i = 0; i < 10; i++) {
                     final int index = i;
                     final long userId = userIds.get(i);
-                    final long seatInventoryId = index < 9 ? MUMBAI_FIRST_SEAT_INVENTORY_ID + index : MUMBAI_FIRST_SEAT_INVENTORY_ID;
+                    final long seatInventoryId = index < 9 ? availableSeatIds.get(index) : availableSeatIds.get(0);
                     pool.submit(() -> {
                         try {
                             allArmed.countDown();

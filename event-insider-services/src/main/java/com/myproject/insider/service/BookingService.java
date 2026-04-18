@@ -129,8 +129,9 @@ public class BookingService {
     public void cancelByUser(Long bookingId, Long userId, BookingRequest request) {
         Booking booking = bookingRepository.findByIdAndUser_Id(bookingId, userId)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking", bookingId));
-        booking.setCancelReason(resolveUserCancelReason(request));
-        cancelInProgress(booking, request.getCancelReason(), request.getUserId());
+        String cancelReason = resolveUserCancelReason(request);
+        booking.setCancelReason(cancelReason);
+        cancelInProgress(booking, cancelReason, userId);
     }
 
     private String resolveUserCancelReason(BookingRequest request) {
