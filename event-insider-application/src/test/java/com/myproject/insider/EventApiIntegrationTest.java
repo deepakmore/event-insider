@@ -15,6 +15,7 @@ import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
+import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,12 +32,30 @@ import com.jayway.jsonpath.JsonPath;
 @Transactional
 class EventApiIntegrationTest {
 
+    private static final String SSO_TOKEN_HEADER = "X-SSO-Token";
+    private static final String TEST_SSO_TOKEN = "test-sso-token";
+
     @Autowired
     MockMvc mockMvc;
 
+    private MockHttpServletRequestBuilder authedGet(String url) {
+        return get(url).header(SSO_TOKEN_HEADER, TEST_SSO_TOKEN);
+    }
+
+    private MockHttpServletRequestBuilder authedPost(String url) {
+        return post(url).header(SSO_TOKEN_HEADER, TEST_SSO_TOKEN);
+    }
+
+    @Test
+    void apiRequest_withDummySsoToken_returns401() throws Exception {
+        mockMvc.perform(get("/api/v1/users/1").header(SSO_TOKEN_HEADER, "dummy_value"))
+                .andExpect(status().isUnauthorized())
+                .andExpect(jsonPath("$.meta.code").value("EVENT_INSIDER_SERVICE_ERROR_401"));
+    }
+
     @Test
     void getSampleUser_byId_returnsFlywaySeedData() throws Exception {
-        mockMvc.perform(get("/api/v1/users/1"))
+        mockMvc.perform(authedGet("/api/v1/users/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.meta.code").value("EVENT_INSIDER_SERVICE_SUCCESS_200"))
                 .andExpect(jsonPath("$.meta.status").value("success"))
@@ -52,7 +71,7 @@ class EventApiIntegrationTest {
         String body = """
 				{"name":"Integration User","email":"%s","mobileNumber":"%s","password":"CorrectHorse1"}"""
                 .formatted(email, mobile);
-        mockMvc.perform(post("/api/v1/users").contentType(APPLICATION_JSON).content(body))
+        mockMvc.perform(authedPost("/api/v1/users").contentType(APPLICATION_JSON).content(body))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.meta.code").value("EVENT_INSIDER_SERVICE_SUCCESS_201"))
                 .andExpect(jsonPath("$.meta.status").value("success"))
@@ -63,7 +82,7 @@ class EventApiIntegrationTest {
 
     @Test
     void getSampleEvent_byId_returnsFlywaySeedData() throws Exception {
-        mockMvc.perform(get("/api/v1/events/1"))
+        mockMvc.perform(authedGet("/api/v1/events/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.meta.code").value("EVENT_INSIDER_SERVICE_SUCCESS_200"))
                 .andExpect(jsonPath("$.meta.status").value("success"))
@@ -77,7 +96,7 @@ class EventApiIntegrationTest {
     void createEvent_returns201AndSuccess201Code() throws Exception {
         String body = """
 				{"name":"Test Event","description":null,"eventType":"CONCERT","pricingType":"CATEGORY"}""";
-        mockMvc.perform(post("/api/v1/events").contentType(APPLICATION_JSON).content(body))
+        mockMvc.perform(authedPost("/api/v1/events").contentType(APPLICATION_JSON).content(body))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.meta.code").value("EVENT_INSIDER_SERVICE_SUCCESS_201"))
                 .andExpect(jsonPath("$.meta.status").value("success"))
@@ -86,7 +105,7 @@ class EventApiIntegrationTest {
 
     @Test
     void getById_unknown_returns404() throws Exception {
-        mockMvc.perform(get("/api/v1/events/999999"))
+        mockMvc.perform(authedGet("/api/v1/events/999999"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.meta.code").value("EVENT_INSIDER_SERVICE_ERROR_404"))
                 .andExpect(jsonPath("$.meta.status").value("error"))
@@ -96,7 +115,7 @@ class EventApiIntegrationTest {
 
     @Test
     void getSampleEventShow_byId_returnsFlywaySeedData() throws Exception {
-        mockMvc.perform(get("/api/v1/event-shows/1"))
+        mockMvc.perform(authedGet("/api/v1/event-shows/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.meta.code").value("EVENT_INSIDER_SERVICE_SUCCESS_200"))
                 .andExpect(jsonPath("$.data.id").value(1))
@@ -108,7 +127,7 @@ class EventApiIntegrationTest {
 
     @Test
     void getEventShow_unknown_returns404() throws Exception {
-        mockMvc.perform(get("/api/v1/event-shows/999999"))
+        mockMvc.perform(authedGet("/api/v1/event-shows/999999"))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.meta.code").value("EVENT_INSIDER_SERVICE_ERROR_404"));
     }
@@ -117,7 +136,7 @@ class EventApiIntegrationTest {
     void createEventShow_returns201() throws Exception {
         String body = """
 				{"eventId":1,"venueId":1,"startTime":"2027-01-01T18:00:00Z","endTime":"2027-01-01T22:00:00Z"}""";
-        mockMvc.perform(post("/api/v1/event-shows").contentType(APPLICATION_JSON).content(body))
+        mockMvc.perform(authedPost("/api/v1/event-shows").contentType(APPLICATION_JSON).content(body))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.meta.code").value("EVENT_INSIDER_SERVICE_SUCCESS_201"))
                 .andExpect(jsonPath("$.data.eventId").value(1))
@@ -126,7 +145,7 @@ class EventApiIntegrationTest {
 
     @Test
     void getSampleEventSeatCategory_byId_returnsFlywaySeedData() throws Exception {
-        mockMvc.perform(get("/api/v1/event-seat-categories/1"))
+        mockMvc.perform(authedGet("/api/v1/event-seat-categories/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.meta.code").value("EVENT_INSIDER_SERVICE_SUCCESS_200"))
                 .andExpect(jsonPath("$.data.eventId").value(1))
@@ -135,7 +154,7 @@ class EventApiIntegrationTest {
 
     @Test
     void getSampleShowSeatPricing_byId_returnsFlywaySeedData() throws Exception {
-        mockMvc.perform(get("/api/v1/show-seat-pricings/1"))
+        mockMvc.perform(authedGet("/api/v1/show-seat-pricings/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.meta.code").value("EVENT_INSIDER_SERVICE_SUCCESS_200"))
                 .andExpect(jsonPath("$.data.showId").value(1))
@@ -145,7 +164,7 @@ class EventApiIntegrationTest {
 
     @Test
     void getSampleSeat_byId_returnsFlywaySeedData() throws Exception {
-        mockMvc.perform(get("/api/v1/seats/1"))
+        mockMvc.perform(authedGet("/api/v1/seats/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.meta.code").value("EVENT_INSIDER_SERVICE_SUCCESS_200"))
                 .andExpect(jsonPath("$.data.showId").value(1))
@@ -154,7 +173,7 @@ class EventApiIntegrationTest {
 
     @Test
     void getSampleSeatInventory_byId_returnsFlywaySeedData() throws Exception {
-        mockMvc.perform(get("/api/v1/seat-inventories/1"))
+        mockMvc.perform(authedGet("/api/v1/seat-inventories/1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.meta.code").value("EVENT_INSIDER_SERVICE_SUCCESS_200"))
                 .andExpect(jsonPath("$.data.showId").value(1))
@@ -164,16 +183,16 @@ class EventApiIntegrationTest {
 
     @Test
     void nestedCatalog_eventShows_seatCategories_showPricing_seatInventories() throws Exception {
-        mockMvc.perform(get("/api/v1/events/1/shows"))
+        mockMvc.perform(authedGet("/api/v1/events/1/shows"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data[*].id", hasItem(1)));
-        mockMvc.perform(get("/api/v1/events/1/seat-categories"))
+        mockMvc.perform(authedGet("/api/v1/events/1/seat-categories"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data[0].name").value("BRONZE"));
-        mockMvc.perform(get("/api/v1/event-shows/1/seat-categories/1/seat-pricing"))
+        mockMvc.perform(authedGet("/api/v1/event-shows/1/seat-categories/1/seat-pricing"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.basePrice").value(500));
-        mockMvc.perform(get("/api/v1/seat-inventories/by-show/1").param("status", "AVAILABLE"))
+        mockMvc.perform(authedGet("/api/v1/seat-inventories/by-show/1").param("status", "AVAILABLE"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.length()").value(9))
                 .andExpect(jsonPath("$.data[*].id", hasItem(9)));
@@ -184,14 +203,14 @@ class EventApiIntegrationTest {
         String externalEventId = "evt-integration-" + UUID.randomUUID();
         String createBody = """
 				{"userId":1,"showId":1,"eventSeatCategoryId":1,"seatInventoryIds":[7,8,9]}""";
-        MvcResult created = mockMvc.perform(post("/api/v1/bookings").contentType(APPLICATION_JSON).content(createBody))
+        MvcResult created = mockMvc.perform(authedPost("/api/v1/bookings").contentType(APPLICATION_JSON).content(createBody))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.data.status").value("IN_PROGRESS"))
                 .andExpect(jsonPath("$.data.lines.length()").value(3))
                 .andReturn();
         long bookingId = ((Number) JsonPath.read(created.getResponse().getContentAsString(), "$.data.id")).longValue();
 
-        mockMvc.perform(get("/api/v1/bookings/" + bookingId).param("userId", "1"))
+        mockMvc.perform(authedGet("/api/v1/bookings/" + bookingId).param("userId", "1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.totalAmount").value(1500));
 
@@ -210,11 +229,11 @@ class EventApiIntegrationTest {
                         .content(webhookBody))
                 .andExpect(status().isOk());
 
-        mockMvc.perform(get("/api/v1/bookings/" + bookingId).param("userId", "1"))
+        mockMvc.perform(authedGet("/api/v1/bookings/" + bookingId).param("userId", "1"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.status").value("COMPLETE"));
 
-        mockMvc.perform(get("/api/v1/seat-inventories/7"))
+        mockMvc.perform(authedGet("/api/v1/seat-inventories/7"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.status").value("BOOKED"));
     }

@@ -39,6 +39,8 @@ class BassiMumbaiConcurrentBookingIntegrationTest {
 
     private static final long BASSI_MUMBAI_SHOW_ID = 3L;
     private static final long BASSI_BRONZE_CATEGORY_ID = 7L;
+    private static final String SSO_TOKEN_HEADER = "X-SSO-Token";
+    private static final String TEST_SSO_TOKEN = "test-sso-token";
 
     @Autowired
     MockMvc mockMvc;
@@ -58,7 +60,10 @@ class BassiMumbaiConcurrentBookingIntegrationTest {
             String body = """
 					{"name":"Bassi Concurrent User %d","email":"%s","mobileNumber":"%s","password":"CorrectHorse1"}"""
                     .formatted(i, email, mobile);
-            MvcResult reg = mockMvc.perform(post("/api/v1/users").contentType(APPLICATION_JSON).content(body))
+            MvcResult reg = mockMvc.perform(post("/api/v1/users")
+                            .header(SSO_TOKEN_HEADER, TEST_SSO_TOKEN)
+                            .contentType(APPLICATION_JSON)
+                            .content(body))
                     .andReturn();
             assertEquals(201, reg.getResponse().getStatus(), reg.getResponse().getContentAsString());
             long id = ((Number) JsonPath.read(reg.getResponse().getContentAsString(), "$.data.id")).longValue();
@@ -99,7 +104,10 @@ class BassiMumbaiConcurrentBookingIntegrationTest {
                             String bookingBody = """
 									{"userId":%d,"showId":%d,"eventSeatCategoryId":%d,"seatInventoryIds":[%d]}"""
                                     .formatted(userId, BASSI_MUMBAI_SHOW_ID, BASSI_BRONZE_CATEGORY_ID, seatInventoryId);
-                            MvcResult r = mockMvc.perform(post("/api/v1/bookings").contentType(APPLICATION_JSON).content(bookingBody))
+                            MvcResult r = mockMvc.perform(post("/api/v1/bookings")
+                                            .header(SSO_TOKEN_HEADER, TEST_SSO_TOKEN)
+                                            .contentType(APPLICATION_JSON)
+                                            .content(bookingBody))
                                     .andReturn();
                             int httpStatus = r.getResponse().getStatus();
                             if (httpStatus == 201) {
@@ -134,7 +142,9 @@ class BassiMumbaiConcurrentBookingIntegrationTest {
         } finally {
             for (UserBooking ub : heldBookings) {
                 try {
-                    mockMvc.perform(post("/api/v1/bookings/{id}/cancel", ub.bookingId()).param("userId", String.valueOf(ub.userId())))
+                    mockMvc.perform(post("/api/v1/bookings/{id}/cancel", ub.bookingId())
+                                    .header(SSO_TOKEN_HEADER, TEST_SSO_TOKEN)
+                                    .param("userId", String.valueOf(ub.userId())))
                             .andExpect(status().isNoContent());
                 } catch (Exception ignored) {}
             }

@@ -4,6 +4,7 @@ app:
     expiration-seconds: 3600
   security:
     require-sso-token: ${APP_REQUIRE_SSO_TOKEN:false}
+    sso-token: ${APP_SSO_TOKEN:dev-sso-token}
   booking:
     hold-duration: PT15M
     stale-hold-scan-interval-ms: 60000

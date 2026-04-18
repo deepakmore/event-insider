@@ -34,7 +34,7 @@ public class HttpExchangeLoggingFilter extends OncePerRequestFilter {
     private static final int DEFAULT_CACHE_LIMIT = 16 * 1024;
     private static final int LOG_BODY_CHAR_MAX = 8_192;
 
-    private static final Set<String> SENSITIVE_HEADERS = Set.of("authorization", "cookie", "set-cookie");
+    private static final Set<String> SENSITIVE_HEADERS = Set.of("x-sso-token", "authorization", "cookie", "set-cookie");
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
