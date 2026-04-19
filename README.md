@@ -25,14 +25,14 @@
 
 ## Key Features
 
-# Functional
+### Functional
 - user registration and retrieval
 - event and show management
 - event seat category pricing
 - seat inventory tracking
 - booking creation and cancellation
 
-# Technical
+### Technical
 - payment webhook confirmation
 - concurrent booking test coverage
 - slack alerts for critical Flow
