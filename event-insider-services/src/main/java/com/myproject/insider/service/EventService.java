@@ -4,7 +4,10 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -25,6 +28,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class EventService {
 
+    private static final String EVENT_LIST_CACHE = "events.list";
     private static final Sort DEFAULT_EVENT_SORT = Sort.by(Sort.Direction.DESC, "createdAt");
 
     /** JPA property names on {@link Event} that are safe for {@code ORDER BY}. */
@@ -34,6 +38,7 @@ public class EventService {
     private final EventRepository eventRepository;
 
     @Transactional
+    @CacheEvict(value = EVENT_LIST_CACHE, allEntries = true)
     public EventResponse create(EventUpsertRequest request) {
         Event event = Event.builder()
                 .name(request.getName())
@@ -52,6 +57,7 @@ public class EventService {
     }
 
     @Transactional(readOnly = true)
+    @Cacheable(value = EVENT_LIST_CACHE, key = "T(java.lang.String).format('%d:%d:%s', #pageable.pageNumber, #pageable.pageSize, #root.target.toSortKey(#pageable.sort))")
     public Page<EventResponse> findAll(Pageable pageable) {
         return eventRepository.findAllByDisabledFalse(toSafeEventPageable(pageable)).map(this::toResponse);
     }
@@ -74,7 +80,17 @@ public class EventService {
         return PageRequest.of(pageable.getPageNumber(), pageable.getPageSize(), Sort.by(safe));
     }
 
+    String toSortKey(Sort sort) {
+        if (sort == null || !sort.isSorted()) {
+            return "unsorted";
+        }
+        return sort.stream()
+                .map(order -> order.getProperty() + ":" + order.getDirection())
+                .collect(Collectors.joining(","));
+    }
+
     @Transactional
+    @CacheEvict(value = EVENT_LIST_CACHE, allEntries = true)
     public EventResponse update(Long id, EventUpsertRequest request) {
         Event event = getEntity(id);
         apply(request, event);
@@ -82,6 +98,7 @@ public class EventService {
     }
 
     @Transactional
+    @CacheEvict(value = EVENT_LIST_CACHE, allEntries = true)
     public void delete(Long id) {
         Event event = eventRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Event", id));
         event.setDisabled(true);
