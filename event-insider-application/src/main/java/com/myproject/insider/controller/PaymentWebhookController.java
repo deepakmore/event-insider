@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.myproject.insider.dto.request.PaymentWebhookRequest;
 import com.myproject.insider.exception.ApiBadRequestException;
+import com.myproject.insider.kafka.SlackAlertKafkaTrigger;
 import com.myproject.insider.service.BookingService;
 
 import jakarta.validation.Valid;
@@ -26,6 +27,7 @@ public class PaymentWebhookController {
     public static final String WEBHOOK_SECRET_HEADER = "X-Payment-Webhook-Secret";
 
     private final BookingService bookingService;
+    private final SlackAlertKafkaTrigger slackAlertKafkaTrigger;
 
     @Value("${app.payment.webhook-secret}")
     private String webhookSecret;
@@ -42,11 +44,19 @@ public class PaymentWebhookController {
 
     private void verifySecret(String providedSecret) {
         if (providedSecret == null) {
+            slackAlertKafkaTrigger.publish(
+                    "PAYMENT_WEBHOOK_INVALID_SECRET",
+                    "P0",
+                    "Missing webhook secret header");
             throw new ApiBadRequestException("Missing webhook secret header");
         }
         byte[] expected = webhookSecret.getBytes(StandardCharsets.UTF_8);
         byte[] actual = providedSecret.getBytes(StandardCharsets.UTF_8);
         if (!MessageDigest.isEqual(expected, actual)) {
+            slackAlertKafkaTrigger.publish(
+                    "PAYMENT_WEBHOOK_INVALID_SECRET",
+                    "P0",
+                    "Invalid webhook secret");
             throw new ApiBadRequestException("Invalid webhook secret");
         }
     }

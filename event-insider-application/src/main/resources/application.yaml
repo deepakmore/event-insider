@@ -14,6 +14,10 @@ app:
   kafka:
     topics:
       booking: ${APP_KAFKA_TOPIC_BOOKING:booking.events}
+      slack: ${APP_KAFKA_TOPIC_SLACK:slack.alerts}
+  alert:
+    contact-team: ${APP_ALERT_CONTACT_TEAM:Alpha}
+    escalate: ${APP_ALERT_ESCALATE:Deepak More}
 
 spring:
   kafka:

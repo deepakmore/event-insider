@@ -27,6 +27,7 @@ import com.myproject.insider.exception.ApiBadRequestException;
 import com.myproject.insider.exception.ApiConflictException;
 import com.myproject.insider.exception.ResourceNotFoundException;
 import com.myproject.insider.kafka.BookingCompletionKafkaTrigger;
+import com.myproject.insider.kafka.SlackAlertKafkaTrigger;
 import com.myproject.insider.repository.BookingRepository;
 import com.myproject.insider.repository.BookingSeatRepository;
 import com.myproject.insider.repository.EventShowRepository;
@@ -49,6 +50,7 @@ public class BookingService {
     private final SeatInventoryRepository seatInventoryRepository;
     private final PaymentWebhookReceiptRepository paymentWebhookReceiptRepository;
     private final BookingCompletionKafkaTrigger bookingCompletionKafkaTrigger;
+    private final SlackAlertKafkaTrigger slackAlertKafkaTrigger;
 
     @Value("${app.booking.hold-duration:PT15M}")
     private String bookingHoldDurationIso;
@@ -175,6 +177,11 @@ public class BookingService {
     @Transactional
     public void confirmPaidFromWebhook(String provider, String externalEventId, long bookingId, String paymentStatus) {
         if (!"SUCCEEDED".equalsIgnoreCase(paymentStatus)) {
+            slackAlertKafkaTrigger.publish(
+                    "PAYMENT_WEBHOOK_INVALID_STATUS",
+                    "P1",
+                    "Unsupported payment status '%s' for bookingId=%d, provider=%s, externalEventId=%s"
+                            .formatted(paymentStatus, bookingId, provider, externalEventId));
             throw new ApiBadRequestException("Unsupported paymentStatus");
         }
         Optional<PaymentWebhookReceipt> prior = paymentWebhookReceiptRepository.findByProviderAndExternalEventId(provider,
