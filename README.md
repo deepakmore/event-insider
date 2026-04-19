@@ -25,13 +25,19 @@
 
 ## Key Features
 
+# Functional
 - user registration and retrieval
 - event and show management
 - event seat category pricing
 - seat inventory tracking
 - booking creation and cancellation
+
+# Technical
 - payment webhook confirmation
 - concurrent booking test coverage
+- slack alerts for critical Flow
+- caching for events data
+- capture requestId and userId in each log
 
 ## Assumptions:
 - This application currently focuses on `concert` events. 

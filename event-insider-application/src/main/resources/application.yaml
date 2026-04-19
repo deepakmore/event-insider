@@ -39,6 +39,8 @@ spring:
         format_sql: true
 
 logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level [%thread] [requestId=%X{requestId:-}] [userId=%X{userId:-}] %logger{36} - %msg%n"
   level:
     org.flywaydb: DEBUG
     org.hibernate.SQL: DEBUG
