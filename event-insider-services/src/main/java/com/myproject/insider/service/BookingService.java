@@ -211,7 +211,7 @@ public class BookingService {
         booking.getUser().getId();
         booking.getEventShow().getId();
         bookingRepository.save(booking);
-        bookingCompletionKafkaTrigger.publishComplete(booking);
+
         PaymentWebhookReceipt receipt = PaymentWebhookReceipt.builder()
                 .provider(provider)
                 .externalEventId(externalEventId)
@@ -219,6 +219,7 @@ public class BookingService {
                 .createdAt(now)
                 .build();
         paymentWebhookReceiptRepository.save(receipt);
+        bookingCompletionKafkaTrigger.publishComplete(booking);
     }
 
     private BookingResponse toResponse(Long bookingId) {
