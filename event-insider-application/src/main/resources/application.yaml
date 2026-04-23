@@ -18,13 +18,28 @@ app:
   alert:
     contact-team: ${APP_ALERT_CONTACT_TEAM:Alpha}
     escalate: ${APP_ALERT_ESCALATE:Deepak More}
+  rate-limit:
+    enabled: ${APP_RATE_LIMIT_ENABLED:true}
+    max-requests: ${APP_RATE_LIMIT_MAX_REQUESTS:100}
+    window: ${APP_RATE_LIMIT_WINDOW:PT15M}
+    counter-key-prefix: ${APP_RATE_LIMIT_COUNTER_PREFIX:rl:ip:}
+    blacklist-redis-key: ${APP_RATE_LIMIT_BLACKLIST_REDIS_KEY:rl:blacklist:ips}
+    blacklist-bootstrap-ips: ${APP_RATE_LIMIT_BLACKLIST_BOOTSTRAP_IPS:}
 
 spring:
+  datasource:
+    hikari:
+      leak-detection-threshold:
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     producer:
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      timeout: ${REDIS_TIMEOUT:2s}
   application:
     name: event-insider
   flyway:

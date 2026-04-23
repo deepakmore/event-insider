@@ -6,8 +6,10 @@ public final class ApplicationServiceCode {
     public static final String SUCCESS_201 = "EVENT_INSIDER_SERVICE_SUCCESS_201";
     public static final String ERROR_400 = "EVENT_INSIDER_SERVICE_ERROR_400";
     public static final String ERROR_401 = "EVENT_INSIDER_SERVICE_ERROR_401";
+    public static final String ERROR_403 = "EVENT_INSIDER_SERVICE_ERROR_403";
     public static final String ERROR_404 = "EVENT_INSIDER_SERVICE_ERROR_404";
     public static final String ERROR_409 = "EVENT_INSIDER_SERVICE_ERROR_409";
+    public static final String ERROR_429 = "EVENT_INSIDER_SERVICE_ERROR_429";
     public static final String ERROR_500 = "EVENT_INSIDER_SERVICE_ERROR_500";
 
     private ApplicationServiceCode() {
@@ -26,11 +28,17 @@ public final class ApplicationServiceCode {
         if (statusCode == 401) {
             return ERROR_401;
         }
+        if (statusCode == 403) {
+            return ERROR_403;
+        }
         if (statusCode == 404) {
             return ERROR_404;
         }
         if (statusCode == 409) {
             return ERROR_409;
+        }
+        if (statusCode == 429) {
+            return ERROR_429;
         }
         if (statusCode == 500) {
             return ERROR_500;
