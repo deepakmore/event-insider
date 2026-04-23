@@ -29,7 +29,7 @@ app:
 spring:
   datasource:
     hikari:
-      leak-detection-threshold:
+      leak-detection-threshold: 2000
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
     producer:
@@ -40,6 +40,8 @@ spring:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
       timeout: ${REDIS_TIMEOUT:2s}
+      repositories:
+        enabled: false
   application:
     name: event-insider
   flyway:
@@ -77,6 +79,8 @@ management:
     info:
       enabled: true
   health:
+    redis:
+      enabled: true
     livenessstate:
       enabled: true
     readinessstate:
